@@ -5,6 +5,7 @@ namespace LinkORB\OrgSync\SynchronizationAdapter\GroupPush;
 use Github\Client;
 use Http\Client\Exception;
 use LinkORB\OrgSync\DTO\Group;
+use LinkORB\OrgSync\Services\InputHandler;
 
 class GithubGroupPushAdapter  implements GroupPushInterface
 {
@@ -20,15 +21,17 @@ class GithubGroupPushAdapter  implements GroupPushInterface
 
     public function pushGroup(Group $group): GroupPushInterface
     {
+        assert(!empty($group->getProperties()[InputHandler::GITHUB_ORGANIZATION]));
+
         try {
             $params = [
                 'name' => $group->getName(),
                 'parent_team_id' => $group->getParent() ? $group->getParent()->getName() : null,
             ];
 
-            $this->client->team()->update($group->getName(), $params);
+            $this->client->team()->update($group->getProperties()[InputHandler::GITHUB_ORGANIZATION], $params);
         } catch (Exception $e) {
-            $this->client->team()->create($group->getName(), $params ?? []);
+            $this->client->team()->create($group->getProperties()[InputHandler::GITHUB_ORGANIZATION], $params ?? []);
         }
 
         foreach ($group->getMembers() as $member) {
